@@ -8,6 +8,16 @@ import os
 import itertools
 import random
 
+class ToChannelsLast:
+    def __call__(self, x):
+        if x.ndim == 3:
+            x = x.unsqueeze(0)
+        elif x.ndim !=4:
+            raise RuntimeError
+        return x.to(memory_format=torch.channels_last)
+
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
 
 def download_class_mura(opt):
     opt.input_name = "mura_train_numImages_" + str(opt.num_images) + "_" + str(opt.policy) + "_" + str(opt.pos_class) \
@@ -21,15 +31,19 @@ def download_class_mura(opt):
     num_images = opt.num_images
 
     def imsave(img, i):
-        transform = transforms.Compose([transforms.ToPILImage(), transforms.Resize((scale, scale))])
+        transform = transforms.Compose([
+            transforms.ToPILImage(), 
+            transforms.Resize((scale, scale)),
+            ToChannelsLast()
+        ])
         im = transform(img)
         im.save("Input/Images/mura_train_numImages_" + str(opt.num_images) +"_" + str(opt.policy) + "_" + str(pos_class)
                     + "_indexdown" +str(opt.index_download) + "_" + str(i) + ".png")
 
     def load_dataset_from_folder(path, c_transforms=None, bs=None, shuf=True):
         dataset = datasets.ImageFolder(
-            root='Data/mura_march_clean/test_data'
-            , transform=transforms.ToTensor()
+            root=path,
+            c_transforms
             # , class_to_idx=class_to_idx
         )
         # print(dataset.classes)
@@ -40,7 +54,7 @@ def download_class_mura(opt):
         trainset_targets = []
         
         for images, labels in trainset:
-            trainset_data.append(images)
+            trainset_data.append(images.numpy())
             trainset_targets.append(labels)
             # print(images, labels)
     
