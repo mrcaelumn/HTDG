@@ -41,9 +41,10 @@ def download_class_mura(opt):
                     + "_indexdown" +str(opt.index_download) + "_" + str(i) + ".png")
 
     def load_dataset_from_folder(path, c_transforms=None, bs=None, shuf=True):
+        print("load dataset: ", path)
         dataset = datasets.ImageFolder(
             root=path,
-            c_transforms
+            transform=c_transforms,
             # , class_to_idx=class_to_idx
         )
         # print(dataset.classes)
