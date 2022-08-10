@@ -13,7 +13,7 @@ from defect_detection_evaluation import defect_detection
 
 if __name__ == '__main__':
     parser = get_arguments()
-    # parser.add_argument('--dataset', help='cifar/mnist/fashionmnist/mvtec/paris', default='mvtec')
+    parser.add_argument('--dataset', help='cifar/mnist/fashionmnist/mvtec/paris/mura', default='mura')
     parser.add_argument('--input_dir', help='input image dir', default='Input/Images')
     parser.add_argument('--pos_class', help='normal class', default=0)
     parser.add_argument('--random_images_download', help='random selection of images', default=False)
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     random_images = opt.random_images_download
     num_images = opt.num_images
     opt.num_transforms = opt.num_transforms
-    # dataset = opt.dataset
+    dataset = opt.dataset
     opt.niter = 54
     opt.niter_rgb
     opt.size_image = 128
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     #         opt.input_name = download_class_cifar(opt)
     #     elif dataset == 'mnist':
     #         opt.num_transforms, opt.niter = 42, opt.niter_gray
-    #         opt.input_name = download_class_mnist(opt)
+    #         
     #     elif dataset == 'fashionmnist':
     #         opt.num_transforms, opt.niter = 42, opt.niter_gray
     #         opt.input_name = download_class_FashionMnist(opt)
@@ -62,24 +62,29 @@ if __name__ == '__main__':
     #         opt.num_transforms, opt.niter = 54, opt.niter_rgb
     #         opt.input_name = download_class_mvtec(opt)
     
-    opt.num_transforms, opt.niter = 54, opt.niter_rgb
+    # opt.input_name_mnist = download_class_mnist(opt)
+    # opt.input_name_cifar = download_class_cifar(opt)
+    
+    
+    opt.num_transforms, opt.niter = 42, opt.niter_rgb
     opt.input_name = download_class_mura(opt)
     print(opt.input_name)
     opt = functions.post_config(opt)
     Gs = []
     Zs,NoiseAmp = {}, {}
+    
     reals_list = torch.FloatTensor(num_images,1,int(opt.nc_im), int(opt.size_image), int(opt.size_image)).cuda()
 
     
     for i in range(num_images):
         real = img.imread("%s/%s_%d.png" % (opt.input_dir, opt.input_name[:-4], i))
-        # if dataset == 'mnist' or dataset == 'fashionmnist':
-        #     real = torch.from_numpy(real).unsqueeze(2)
-        #     real = real.repeat(1, 1, 3).numpy()
+        if dataset == 'mnist' or dataset == 'fashionmnist':
+            real = torch.from_numpy(real).unsqueeze(2)
+            real = real.repeat(1, 1, 3).numpy()
             
         real = functions.np2torch(real, opt)
         real = real[:, 0:3, :, :]
-        
+        print(real.shape)
         functions.adjust_scales2image(real, opt)
         
     dir2save = functions.generate_dir2save(opt)
@@ -90,6 +95,8 @@ if __name__ == '__main__':
     if opt.mode == 'train':
         
         train(opt, Gs, Zs, reals, NoiseAmp)
+        
+        
     if dataset == 'mvtec':
         defect_detection(opt.input_name, opt.test_size, opt)
     else:

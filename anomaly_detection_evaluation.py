@@ -47,8 +47,11 @@ def anomaly_detection(input_name_model,test_size, opt):
            "/scale_factor=0.750000,alpha=" + str(alpha)
     transformations_list = np.load("TrainedModels/" + str(opt.input_name)[:-4] +  "/transformations.npy")
     probs_predictions = []
-
+    
+    print("xTest_input.shape:", xTest_input.shape)
+    
     real = torch.from_numpy(xTest_input[0]).cuda().unsqueeze(0).permute((0, 3, 1, 2))
+    print("real.size():", real.size())
     real = imresize_to_shape(real, (scale, scale), opt)
 
     functions.adjust_scales2image(real, opt)

@@ -8,16 +8,15 @@ import os
 import itertools
 import random
 
-class ToChannelsLast:
-    def __call__(self, x):
-        if x.ndim == 3:
-            x = x.unsqueeze(0)
-        elif x.ndim !=4:
-            raise RuntimeError
-        return x.to(memory_format=torch.channels_last)
+def convert(img, target_type_min, target_type_max, target_type):
+    imin = img.min()
+    imax = img.max()
 
-    def __repr__(self):
-        return self.__class__.__name__ + '()'
+    a = (target_type_max - target_type_min) / (imax - imin)
+    b = target_type_max - a * imax
+    new_img = (a * img + b).astype(target_type)
+    return new_img
+
 
 def download_class_mura(opt):
     opt.input_name = "mura_train_numImages_" + str(opt.num_images) + "_" + str(opt.policy) + "_" + str(opt.pos_class) \
@@ -34,7 +33,6 @@ def download_class_mura(opt):
         transform = transforms.Compose([
             transforms.ToPILImage(), 
             transforms.Resize((scale, scale)),
-            ToChannelsLast()
         ])
         im = transform(img)
         im.save("Input/Images/mura_train_numImages_" + str(opt.num_images) +"_" + str(opt.policy) + "_" + str(pos_class)
@@ -55,13 +53,17 @@ def download_class_mura(opt):
         trainset_targets = []
         
         for images, labels in trainset:
-            trainset_data.append(images.numpy())
+            img = images.permute(1, 2, 0).numpy()
+            img = convert(img, 0, 255, np.uint8)
+            trainset_data.append(img)
             trainset_targets.append(labels)
             # print(images, labels)
     
         
         train_data = np.array(trainset_data)
         train_labels = np.array(trainset_targets)
+        print("train_data", train_data.shape)
+        print("train_labels", train_labels.shape)
         
         return train_data, train_labels
     

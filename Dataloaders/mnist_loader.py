@@ -26,6 +26,10 @@ def download_class_mnist(opt):
         trainset = datasets.MNIST('./mnist_data', download=True, train=True)
         train_data = np.array(trainset.data)
         train_labels = np.array(trainset.targets)
+        
+        print("train_data: ", train_data.shape)
+        print("train_labels: ", train_labels.shape)
+    
         train_data = train_data[np.where(train_labels == int(pos_class))]
 
         dicty = {}
@@ -64,8 +68,13 @@ def download_class_mnist(opt):
     if os.path.exists(path) == False:
         os.mkdir(path)
     mnist_testset = datasets.MNIST('./mnist_data', download=True, train=False)
+    
     test_data = np.array(mnist_testset.data)
     test_labels = np.array(mnist_testset.targets)
+    
+    print("test_data: ", test_data.shape)
+    print("test_labels: ", test_labels.shape)
+    
     test_data = torch.from_numpy(test_data).unsqueeze(3)
     test_data = test_data.repeat(1, 1,1, 3).numpy()
     test_data = test_data.transpose((0, 3, 1, 2)) / 255

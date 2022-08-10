@@ -21,6 +21,7 @@ def move_to_gpu(t):
     return t
 
 def np2torch(x,opt):
+    
     if opt.nc_im == 3:
         x = x[:,:,:,None]
         x = x.transpose((3, 2, 0, 1))/255
