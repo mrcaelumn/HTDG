@@ -33,7 +33,7 @@ def np2torch(x,opt):
     if not (opt.not_cuda):
         x = move_to_gpu(x)
     x = x.type(torch.cuda.FloatTensor) if not(opt.not_cuda) else x.type(torch.FloatTensor)
-    #x = x.type(torch.cuda.FloatTensor)
+    # x = x.type(torch.cuda.FloatTensor)
     x = norm(x)
     return x
 

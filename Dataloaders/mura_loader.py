@@ -39,7 +39,7 @@ def download_class_mura(opt):
                     + "_indexdown" +str(opt.index_download) + "_" + str(i) + ".png")
 
     def load_dataset_from_folder(path, c_transforms=None, bs=None, shuf=True):
-        print("load dataset: ", path)
+        
         dataset = datasets.ImageFolder(
             root=path,
             transform=c_transforms,
@@ -60,12 +60,11 @@ def download_class_mura(opt):
             # print(images, labels)
     
         
-        train_data = np.array(trainset_data)
-        train_labels = np.array(trainset_targets)
-        print("train_data", train_data.shape)
-        print("train_labels", train_labels.shape)
+        data = np.array(trainset_data)
+        labels = np.array(trainset_targets)
+        print("load dataset: ", path, "data", data.shape, "labels", labels.shape)
         
-        return train_data, train_labels
+        return data, labels
     
     if opt.mode == "train":
         
