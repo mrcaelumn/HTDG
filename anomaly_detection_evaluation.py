@@ -12,6 +12,7 @@ import torch.utils.data
 from torchvision import datasets, transforms
 import torchvision
 import os, sys
+from tqdm import tqdm
 
 
 def anomaly_detection(input_name_model,test_size, opt):
@@ -48,10 +49,10 @@ def anomaly_detection(input_name_model,test_size, opt):
     transformations_list = np.load("TrainedModels/" + str(opt.input_name)[:-4] +  "/transformations.npy")
     probs_predictions = []
     
-    print("xTest_input.shape:", xTest_input.shape)
+    # print("xTest_input.shape:", xTest_input.shape)
     
     real = torch.from_numpy(xTest_input[0]).cuda().unsqueeze(0).permute((0, 3, 1, 2))
-    print("real.size():", real.size())
+    # print("real.size():", real.size())
     real = imresize_to_shape(real, (scale, scale), opt)
 
     functions.adjust_scales2image(real, opt)
@@ -67,11 +68,20 @@ def anomaly_detection(input_name_model,test_size, opt):
         return scores_per_scale_dict
 
     with torch.no_grad():
-        for i in range(batch_n):
+        for i in tqdm(range(batch_n), desc='testing stages'):
+        # for i in range(batch_n):
             reals = {}
+            # print("xTest_input.shape: ", xTest_input.shape)
             real = torch.from_numpy(xTest_input[i]).unsqueeze(0).cuda()
+            # print("real batch", real.size())
             real = functions.norm(real)
-            real = real[:, 0:3, :, :]
+
+            # real = real[:, 0:3, :, :]
+            # print("real 1", real.size())
+            # print("real 2", real.shape[-1])
+            if real.shape[-1] == 3:
+                real = real.permute(0, 3, 1, 2)
+                # real = real.transpose(0, 3, 1, 2)
             real = imresize_to_shape(real, (scale,scale), opt)
             functions.adjust_scales2image(real, opt)
             real = imresize(real, opt.scale1, opt)
@@ -81,7 +91,7 @@ def anomaly_detection(input_name_model,test_size, opt):
 
             err_total,err_total_avg, err_total_abs = [],[],[]
 
-            for scale_num in range(0, opt.stop_scale+1  , 1):
+            for scale_num in range(0, opt.stop_scale+1, 1):
                 opt.nfc = min(opt.nfc_init * pow(2, math.floor(scale_num / 4)), opt.size_image)
                 opt.min_nfc = min(opt.min_nfc_init * pow(2, math.floor(scale_num / 4)), opt.size_image)
                 netD = models.WDiscriminatorMulti(opt)
@@ -135,13 +145,14 @@ def anomaly_detection(input_name_model,test_size, opt):
             probs_predictions.append(avg_err_total)
 
             if i > 99 and i % 100 == 0:
-                print(i)
+                # print(i)
                 try:
+                    print("name model: ", opt.input_name)
                     with open(opt.input_name + ".txt", "w") as text_file:
                         auc1 = roc_auc_score(yTest_input[:i], probs_predictions[:i])
                         print("roc_auc_score  all ={}".format(auc1), file=text_file)
-                except:
-                    pass
+                except Exception as e:
+                    print(e)
 
         with open(opt.input_name + ".txt", "w") as text_file:
 
@@ -153,7 +164,9 @@ def anomaly_detection(input_name_model,test_size, opt):
 
             scores_per_scale_dict_norm = compute_normalized_dict(scores_per_scale_dict)
             scores_per_scale_dict_norm = scores_per_scale_dict_norm.cpu().clone().numpy()
-
+            scores_per_scale_dict_norm = np.nan_to_num(scores_per_scale_dict_norm)
+            # print(scores_per_scale_dict_norm)
+            print(scores_per_scale_dict_norm.shape)
             print(" ", file=text_file)
             print("results with normalization, without top_k: ", file=text_file)
 

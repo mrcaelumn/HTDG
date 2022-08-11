@@ -17,7 +17,7 @@ def train(opt,Gs,Zs,reals,NoiseAmp):
     nfc_prev = 0
     for index_image in range(int(opt.num_images)):
         NoiseAmp[index_image] = []
-
+    print("number of scale: ", opt.stop_scale+1)
     while scale_num < opt.stop_scale+1:
 
         opt.nfc = min(opt.nfc_init * pow(2, math.floor(scale_num / 4)), opt.size_image)

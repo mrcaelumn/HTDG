@@ -20,11 +20,11 @@ if __name__ == '__main__':
     parser.add_argument('--num_images', type=int, help='number of images to train on', default=20)
     parser.add_argument('--if_download', type=bool, help='do you want to download class', default=False)
     parser.add_argument('--mode', help='task to be done', default='train')
-    parser.add_argument('--size_image', type=int, help='size orig image', default=128)
+    parser.add_argument('--size_image', type=int, help='size orig image', default=64)
     parser.add_argument('--num_epochs', type=int, help='num epochs', default=1)
     parser.add_argument('--policy', default='')
     parser.add_argument('--niter_gray', help='number of iterations in each scale', type=int, default=500)
-    parser.add_argument('--niter_rgb', help='number of iterations in each scale', type=int, default=1000)
+    parser.add_argument('--niter_rgb', help='number of iterations in each scale', type=int, default=500)
     parser.add_argument('--index_download', help='index in dataset for starting download', type=int, default=1)
     # parser.add_argument('--use_internal_load', help='using another dataset', default=False)
     parser.add_argument('--experiment', help='task to be done', default='stop_signs')
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     dataset = opt.dataset
     opt.niter = 54
     opt.niter_rgb
-    opt.size_image = 128
+    # opt.size_image = 128
     # opt.input_dir = 
     # if opt.if_download == True:
     #     if dataset == 'cifar':

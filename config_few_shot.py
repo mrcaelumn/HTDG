@@ -24,9 +24,9 @@ def get_arguments():
     parser.add_argument('--padd_size', type=int, help='net pad size', default=0)  # math.floor(opt.ker_size/2)
 
     # pyramid parameters:
-    parser.add_argument('--scale_factor', type=float, help='pyramid scale factor', default=0.75)  # pow(0.5,1/6))
+    parser.add_argument('--scale_factor', type=float, help='pyramid scale factor', default=0.5)  # pow(0.5,1/6))
     parser.add_argument('--noise_amp', type=float, help='addative noise cont weight', default=0.1)
-    parser.add_argument('--min_size', type=int, help='image minimal size at the coarser scale', default=25)
+    parser.add_argument('--min_size', type=int, help='image minimal size at the coarser scale', default=32)
     parser.add_argument('--max_size', type=int, help='image minimal size at the coarser scale', default=64)
 
     # optimization hyper parameters:
