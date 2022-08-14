@@ -11,7 +11,7 @@ import torch.utils.data
 import torch.utils.data
 from FewShot_models.manipulate import *
 from FewShot_models.parallel import DataParallelModel, DataParallelCriterion
-e
+
 def train(opt,Gs,Zs,reals,NoiseAmp):
     reals, Zs, NoiseAmp, in_s, scale_num = functions.collect_reals(opt, reals, Zs, NoiseAmp)
     nfc_prev = 0
