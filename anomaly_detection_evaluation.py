@@ -6,6 +6,8 @@ import FewShot_models.functions as functions
 import FewShot_models.models as models
 from sklearn.metrics import roc_curve, auc, roc_auc_score, confusion_matrix, f1_score
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import torch
 import torch.nn as nn
 import torch.utils.data
@@ -21,7 +23,7 @@ def plot_roc_curve(fpr, tpr, name_model):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic (ROC) Curve')
     plt.legend()
-    plt.savefig(result_folder + name_model+'_roc_curve.png')
+    plt.savefig(name_model+'_roc_curve.png')
     plt.show()
     plt.clf()
 
@@ -234,7 +236,8 @@ def anomaly_detection(input_name_model,test_size, opt):
             print("results without norm, without top_k: ", file=text_file)
             
             result = calculate_metrics(yTest_input, probs_predictions, opt.input_name)
-            print("results without norm: ", result, file=text_file)
+            print("results without norm: ", result, file=text_file
+                 )
             
             
             # auc1 = roc_auc_score(yTest_input, probs_predictions)

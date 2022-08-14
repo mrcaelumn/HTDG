@@ -43,7 +43,7 @@ def download_class_mura(opt):
         dataset = datasets.ImageFolder(
             root=path,
             transform=c_transforms,
-            # , class_to_idx=class_to_idx
+            class_to_idx=class_to_idx,
         )
         # print(dataset.classes)
         # print(dataset.class_to_idx)
