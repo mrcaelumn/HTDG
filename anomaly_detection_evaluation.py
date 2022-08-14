@@ -4,7 +4,7 @@ from FewShot_models.training_parallel import *
 from FewShot_models.imresize import imresize, imresize_to_shape
 import FewShot_models.functions as functions
 import FewShot_models.models as models
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 import numpy as np
 import torch
 import torch.nn as nn
@@ -159,9 +159,15 @@ def anomaly_detection(input_name_model,test_size, opt):
             print(pos_class, "results: ", file=text_file)
             print(" ", file=text_file)
             print("results without norm, without top_k: ", file=text_file)
-            auc1 = roc_auc_score(yTest_input, probs_predictions)
-            print("roc_auc_score (not normal) all ={}".format(auc1), file=text_file)
-
+            # auc1 = roc_auc_score(yTest_input, probs_predictions)
+            # print("roc_auc_score (not normal) all ={}".format(auc1), file=text_file)
+            
+            false_positive_rate, true_positive_rate, thresholds = roc_curve(yTest_input, probs_predictions)
+            print(f'TNR={false_positive_rate}, TPR={true_positive_rate}, threshold={thresholds}', file=text_file)
+            roc_score = auc(false_positive_rate, true_positive_rate)
+            print("roc_auc_score (not normal) all ={}".format(roc_score), file=text_file)
+            
+            
             scores_per_scale_dict_norm = compute_normalized_dict(scores_per_scale_dict)
             scores_per_scale_dict_norm = scores_per_scale_dict_norm.cpu().clone().numpy()
             scores_per_scale_dict_norm = np.nan_to_num(scores_per_scale_dict_norm)
@@ -171,8 +177,11 @@ def anomaly_detection(input_name_model,test_size, opt):
             print("results with normalization, without top_k: ", file=text_file)
 
             probs_predictions_norm_all = np.mean(scores_per_scale_dict_norm, axis=0)
-            auc1 = roc_auc_score(yTest_input, probs_predictions_norm_all)
-            print("roc_auc_score T1 normalize all ={}".format(auc1), file=text_file)
+            
+            false_positive_rate, true_positive_rate, thresholds = roc_curve(yTest_input, probs_predictions_norm_all)
+            print(f'TNR={false_positive_rate}, TPR={true_positive_rate}, threshold={thresholds}', file=text_file)
+            roc_score = auc(false_positive_rate, true_positive_rate)
+            print("roc_auc_score T1 normalize all ={}".format(roc_score), file=text_file)
 
     path = str(data) + "_test_scale" + str(scale) + "_" + str(pos_class) + "_" + str(num_images)
     os.remove(path + "/" + str(data) + "_data_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy")
