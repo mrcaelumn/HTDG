@@ -18,8 +18,8 @@ def convert(img, target_type_min, target_type_max, target_type):
     return new_img
 
 
-def download_class_mura(opt):
-    opt.input_name = "mura_train_numImages_" + str(opt.num_images) + "_" + str(opt.policy) + "_" + str(opt.pos_class) \
+def download_class_folder(opt):
+    opt.input_name = str(opt.dataset) + "_train_numImages_" + str(opt.num_images) + "_" + str(opt.policy) + "_" + str(opt.pos_class) \
                      + "_indexdown" + str(opt.index_download) + ".png"
     class_to_idx = {
         "normal": 0,
@@ -35,7 +35,7 @@ def download_class_mura(opt):
             transforms.Resize((scale, scale)),
         ])
         im = transform(img)
-        im.save("Input/Images/mura_train_numImages_" + str(opt.num_images) +"_" + str(opt.policy) + "_" + str(pos_class)
+        im.save("Input/Images/" + str(opt.dataset) + "_train_numImages_" + str(opt.num_images) +"_" + str(opt.policy) + "_" + str(pos_class)
                     + "_indexdown" +str(opt.index_download) + "_" + str(i) + ".png")
 
     def load_dataset_from_folder(path, c_transforms=None, bs=None, shuf=True):
@@ -62,7 +62,7 @@ def download_class_mura(opt):
         
         data = np.array(trainset_data)
         labels = np.array(trainset_targets)
-        print("load dataset: ", path, "data", data.shape, "labels", labels.shape)
+        # print("load dataset: ", path, "data", data.shape, "labels", labels.shape)
         
         return data, labels
     
@@ -70,7 +70,7 @@ def download_class_mura(opt):
         
         # trainset = datasets.MNIST('./mnist_data', download=True, train=True)
         
-        train_data, train_labels = load_dataset_from_folder('Data/mura_march_clean/train_data', c_transforms=transforms.ToTensor())
+        train_data, train_labels = load_dataset_from_folder('Data/' + str(opt.dataset) + '/train_data', c_transforms=transforms.ToTensor())
         
         train_data = train_data[np.where(train_labels == int(pos_class))]
 
@@ -96,7 +96,7 @@ def download_class_mura(opt):
             os.mkdir(path_transform)
         np.save(path_transform +  "/transformations.npy", lst)
 
-    path = "mura_test_scale" + str(scale) + "_" + str(pos_class) + "_" + str(num_images)
+    path = str(opt.dataset) + "_test_scale" + str(scale) + "_" + str(pos_class) + "_" + str(num_images)
     if os.path.exists(path) == False:
         os.mkdir(path)
         
@@ -106,11 +106,11 @@ def download_class_mura(opt):
 #     test_data = np.array(mura_testset.data)
 #     test_labels = np.array(mura_testset.targets)
     
-    test_data, test_labels = load_dataset_from_folder('Data/mura_march_clean/test_data', c_transforms=transforms.ToTensor())
+    test_data, test_labels = load_dataset_from_folder('Data/' + str(opt.dataset) + '/test_data', c_transforms=transforms.ToTensor())
     
-    np.save(path + "/mura_data_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy", test_data)
-    np.save(path + "/mura_labels_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy", test_labels)
+    np.save(path + "/" + str(opt.dataset) + "_data_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy", test_data)
+    np.save(path + "/" + str(opt.dataset) + "_labels_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy", test_labels)
 
-    opt.input_name = "mura_train_numImages_" + str(opt.num_images) + "_" + str(opt.policy) + "_" + str(pos_class) \
+    opt.input_name = str(opt.dataset) + "_train_numImages_" + str(opt.num_images) + "_" + str(opt.policy) + "_" + str(pos_class) \
                      + "_indexdown" + str(opt.index_download) + ".png"
     return opt.input_name
