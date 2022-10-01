@@ -14,20 +14,21 @@
 
 
 listDataset=(
-    "tile" "leather" "carpet"
+    "tile" "leather" "mura"
 )
 
-
+listShots=(20 15 10 5)
 
 echo "start training process for HTDG"
-for t in ${listDataset[@]}; do
-    version=1
-    echo "Start Program $t of version $version"
+for ns in ${listShots[@]}; do
+    for t in ${listDataset[@]}; do
+        version=1
+        echo "Start Program $t of version $version"
 
-    # run programming
-    python3 main_train.py --dataset $t
+        # run programming
+        python3 main_train.py --dataset $t --num_images $ns
 
-    sleep 5
-    echo "Oops! I fell asleep for a couple seconds!"
+        sleep 5
+        echo "Oops! I fell asleep for a couple seconds!"
+    done
 done
-
