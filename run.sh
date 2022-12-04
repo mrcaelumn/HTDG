@@ -17,7 +17,7 @@ listDataset=(
     "tile" "leather" "mura"
 )
 
-listShots=(20 15 10 5)
+listShots=(20)
 
 echo "start training process for HTDG"
 for ns in ${listShots[@]}; do

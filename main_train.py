@@ -22,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_epochs', type=int, help='num epochs', default=1)
     parser.add_argument('--policy', default='')
     parser.add_argument('--niter_gray', help='number of iterations in each scale', type=int, default=500)
-    parser.add_argument('--niter_rgb', help='number of iterations in each scale', type=int, default=500)
+    parser.add_argument('--niter_rgb', help='number of iterations in each scale', type=int, default=1000)
     parser.add_argument('--index_download', help='index in dataset for starting download', type=int, default=1)
     # parser.add_argument('--use_internal_load', help='using another dataset', default=False)
     parser.add_argument('--experiment', help='task to be done', default='stop_signs')
@@ -33,6 +33,9 @@ if __name__ == '__main__':
 
 
     opt = parser.parse_args()
+    
+    start_time = datetime.now()
+    
     scale = opt.size_image
     # pos_class = opt.pos_class
     random_images = opt.random_images_download
@@ -58,7 +61,7 @@ if __name__ == '__main__':
     Zs,NoiseAmp = {}, {}
     
     reals_list = torch.FloatTensor(num_images,1,int(opt.nc_im), int(opt.size_image), int(opt.size_image)).cuda()
-
+    
     for i in range(num_images):
         real = img.imread("%s/%s_%d.png" % (opt.input_dir, opt.input_name[:-4], i))    
         real = functions.np2torch(real, opt)
@@ -74,6 +77,11 @@ if __name__ == '__main__':
     
     if opt.mode == 'train':
         train(opt, Gs, Zs, reals, NoiseAmp)
-        
+    
+    f = open(f"{str(opt.input_name)[:-4]}_duration_training.txt",'w')
+    end_time = datetime.now()
+    TRAINING_DURATION = end_time - start_time
+    print(f'Duration of Training: {TRAINING_DURATION}', file=f)
+    
     # testing    
     anomaly_detection(opt.input_name, opt.test_size, opt)
