@@ -16,6 +16,7 @@ import torchvision
 import os, sys
 from tqdm import tqdm
 
+
 def plot_roc_curve(fpr, tpr, name_model):
     plt.plot(fpr, tpr, color='orange', label='ROC')
     plt.plot([0, 1], [0, 1], color='darkblue', linestyle='--')
@@ -23,11 +24,14 @@ def plot_roc_curve(fpr, tpr, name_model):
     plt.ylabel('True Positive Rate')
     plt.title('Receiver Operating Characteristic (ROC) Curve')
     plt.legend()
-    plt.savefig(name_model+'_roc_curve.png')
+    plt.savefig(name_model + '_roc_curve.png')
     plt.show()
     plt.clf()
 
+
 ''' calculate the auc value for lables and scores'''
+
+
 def roc(labels, scores, name_model):
     """Compute ROC curve and ROC area for each class"""
     roc_auc = dict()
@@ -40,57 +44,97 @@ def roc(labels, scores, name_model):
     optimal_threshold = threshold[optimal_idx]
     # draw plot for ROC-Curve
     plot_roc_curve(fpr, tpr, name_model)
-    
+
     return roc_auc, optimal_threshold
 
+
 def plot_anomaly_score(score_ano, labels, name, model_name):
-    
     df = pd.DataFrame(
-    {'predicts': score_ano,
-     'label': labels
-    })
-    
+        {'predicts': score_ano,
+         'label': labels
+         })
+
     df_normal = df[df.label == 0]
-    sns.distplot(df_normal['predicts'],  kde=False, label='normal')
+    sns.distplot(df_normal['predicts'], kde=False, label='normal')
 
     df_defect = df[df.label == 1]
-    sns.distplot(df_defect['predicts'],  kde=False, label='defect')
-    
-#     plt.plot(epochs, disc_loss, 'b', label='Discriminator loss')
+    sns.distplot(df_defect['predicts'], kde=False, label='defect')
+
+    #     plt.plot(epochs, disc_loss, 'b', label='Discriminator loss')
     plt.title(name)
     plt.xlabel('Anomaly Scores')
     plt.ylabel('Number of samples')
     plt.legend(prop={'size': 12})
-    plt.savefig(model_name+ '_'+name+'_anomay_scores_dist.png')
+    plt.savefig(model_name + '_' + name + '_anomay_scores_dist.png')
     plt.show()
     plt.clf()
-    
+
+
+def get_tnr_tpr_custom(labels, scores, tnr_min=0.9):
+    # calculate roc curves
+    fpr, tpr, thresholds = roc_curve(labels, scores)
+    # get the best threshold with fpr <=0.1
+    df = pd.DataFrame(columns=['threshold', 'TNR', 'TPR'])
+
+    for th in thresholds:
+
+        m_scores_ano_final = (scores > th).astype(float)
+
+        TN, FP, FN, TP = confusion_matrix(labels, m_scores_ano_final).ravel()
+
+        TNR = (TN / (FP + TN))
+        TPR = (TP / (TP + FN))
+
+        # print(data)
+        if TNR >= tnr_min:
+            data = {
+                "threshold": float(th),
+                "TNR": float(TNR),
+                "TPR": float(TPR),
+            }
+            df = pd.concat([df, pd.DataFrame.from_records([data])])
+
+    test = df.sort_values('TPR', ascending=False)
+    print(test.head(3))
+    best_treshold = test['threshold'].iloc[0]
+    best_TNR = test['TNR'].iloc[0]
+    best_TPR = test['TPR'].iloc[0]
+
+    return best_treshold, best_TNR, best_TPR
+
+
 def calculate_metrics(y_true, y_preds, name):
-    auc_out, threshold = roc(y_true, y_preds, name)     
-            
+    auc_out, threshold = roc(y_true, y_preds, name)
+
     # histogram distribution of anomaly scores
     plot_anomaly_score(y_preds, y_true, "anomaly_score_dist", name)
+
+    min_tnr = 0.9
+    m_th, m_tnr, m_tpr = get_tnr_tpr_custom(y_true, y_preds, min_tnr)
 
     y_preds = (y_preds > threshold).astype(int)
 
     TN, FP, FN, TP = confusion_matrix(y_true, y_preds).ravel()
 
-
     arr_result = [
         f"Model Spec: {name}",
         f"AUC: {auc_out}",
         f"Threshold: {threshold}",
-        f"False Alarm Rate (FPR): {(FP/(FP+TN))}", 
-        f"TNR: {(TN/(FP+TN))}", 
-        f"Precision Score (PPV): {(TP/(TP+FP))}", 
-        f"Recall Score (TPR): {(TP/(TP+FN))}", 
-        f"NPV: {(TN/(FN+TN))}", 
-        f"F1-Score: {(f1_score(y_true, y_preds))}", 
+        f"False Alarm Rate (FPR): {(FP / (FP + TN))}",
+        f"TNR: {(TN / (FP + TN))}",
+        f"Precision Score (PPV): {(TP / (TP + FP))}",
+        f"Recall Score (TPR): {(TP / (TP + FN))}",
+        f"NPV: {(TN / (FN + TN))}",
+        f"F1-Score: {(f1_score(y_true, y_preds))}",
+        f"M_Threshold: {m_th}",
+        f"M_TNR: {m_tnr}",
+        f"M_TPR: {m_tpr}",
     ]
     # print("\n".join(arr_result))
     return "\n".join(arr_result)
 
-def anomaly_detection(input_name_model,test_size, opt):
+
+def anomaly_detection(input_name_model, test_size, opt):
     scale = int(opt.size_image)
     pos_class = opt.pos_class
 
@@ -99,10 +143,12 @@ def anomaly_detection(input_name_model,test_size, opt):
     num_images = opt.num_images
 
     path = str(data) + "_test_scale" + str(scale) + "_" + str(pos_class) + "_" + str(num_images)
-    if (os.path.exists(path)==True):
+    if (os.path.exists(path) == True):
 
-        xTest_input = np.load(path + "/" + str(data) + "_data_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy")
-        yTest_input = np.load(path + "/" + str(data) + "_labels_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy")
+        xTest_input = np.load(path + "/" + str(data) + "_data_test_" + str(pos_class) + str(scale) + "_" + str(
+            opt.index_download) + ".npy")
+        yTest_input = np.load(path + "/" + str(data) + "_labels_test_" + str(pos_class) + str(scale) + "_" + str(
+            opt.index_download) + ".npy")
 
     else:
         if os.path.exists(path) == False:
@@ -121,19 +167,18 @@ def anomaly_detection(input_name_model,test_size, opt):
 
     path = "TrainedModels/" + str(opt.input_name)[:-4] + \
            "/scale_factor=0.500000,alpha=" + str(alpha)
-    transformations_list = np.load("TrainedModels/" + str(opt.input_name)[:-4] +  "/transformations.npy")
+    transformations_list = np.load("TrainedModels/" + str(opt.input_name)[:-4] + "/transformations.npy")
     probs_predictions = []
-    
+
     # print("xTest_input.shape:", xTest_input.shape)
-    
+
     real = torch.from_numpy(xTest_input[0]).cuda().unsqueeze(0).permute((0, 3, 1, 2))
     # print("real.size():", real.size())
     real = imresize_to_shape(real, (scale, scale), opt)
 
     functions.adjust_scales2image(real, opt)
 
-
-    scores_per_scale_dict = torch.from_numpy(np.zeros((opt.stop_scale+1,batch_n))).cuda()
+    scores_per_scale_dict = torch.from_numpy(np.zeros((opt.stop_scale + 1, batch_n))).cuda()
 
     def compute_normalized_dict(scores_per_scale_dict):
         for scale in range(0, opt.stop_scale + 1):
@@ -144,7 +189,7 @@ def anomaly_detection(input_name_model,test_size, opt):
 
     with torch.no_grad():
         for i in tqdm(range(batch_n), desc='testing stages'):
-        # for i in range(batch_n):
+            # for i in range(batch_n):
             reals = {}
             # print("xTest_input.shape: ", xTest_input.shape)
             real = torch.from_numpy(xTest_input[i]).unsqueeze(0).cuda()
@@ -157,16 +202,16 @@ def anomaly_detection(input_name_model,test_size, opt):
             if real.shape[-1] == 3:
                 real = real.permute(0, 3, 1, 2)
                 # real = real.transpose(0, 3, 1, 2)
-            real = imresize_to_shape(real, (scale,scale), opt)
+            real = imresize_to_shape(real, (scale, scale), opt)
             functions.adjust_scales2image(real, opt)
             real = imresize(real, opt.scale1, opt)
             for index_image in range(int(opt.num_images)):
                 reals[index_image] = []
-                reals = functions.creat_reals_pyramid(real, reals, opt,index_image)
+                reals = functions.creat_reals_pyramid(real, reals, opt, index_image)
 
-            err_total,err_total_avg, err_total_abs = [],[],[]
+            err_total, err_total_avg, err_total_abs = [], [], []
 
-            for scale_num in range(0, opt.stop_scale+1, 1):
+            for scale_num in range(0, opt.stop_scale + 1, 1):
                 opt.nfc = min(opt.nfc_init * pow(2, math.floor(scale_num / 4)), opt.size_image)
                 opt.min_nfc = min(opt.min_nfc_init * pow(2, math.floor(scale_num / 4)), opt.size_image)
                 netD = models.WDiscriminatorMulti(opt)
@@ -183,8 +228,8 @@ def anomaly_detection(input_name_model,test_size, opt):
                     reals_transform = []
                     for index_transform, pair in enumerate(transformations_list):
                         real = reals[index_image][scale_num].to(opt.device)
-                        flag_color,is_flip, tx, ty, k_rotate = pair
-                        real_augment = apply_augmentation(real, is_flip, tx, ty, k_rotate,flag_color).to(opt.device)
+                        flag_color, is_flip, tx, ty, k_rotate = pair
+                        real_augment = apply_augmentation(real, is_flip, tx, ty, k_rotate, flag_color).to(opt.device)
                         real_augment = torch.squeeze(real_augment)
                         reals_transform.append(real_augment)
                     real_transform = torch.stack(reals_transform)
@@ -202,10 +247,10 @@ def anomaly_detection(input_name_model,test_size, opt):
                     score_temp = m(reshaped_output)
                     score_all = score_temp.reshape(opt.num_transforms, -1, opt.num_transforms)
                     for j in range(opt.num_transforms):
-                            current = score_all[j]
-                            score_temp = current[:, j]
-                            score_temp = torch.mean(score_temp)
-                            score_image_in_scale += score_temp
+                        current = score_all[j]
+                        score_temp = current[:, j]
+                        score_temp = torch.mean(score_temp)
+                        score_image_in_scale += score_temp
                     err_scale.append(score_image_in_scale)
 
                 err_scale = torch.stack(err_scale)
@@ -234,25 +279,20 @@ def anomaly_detection(input_name_model,test_size, opt):
             print(pos_class, "results: ", file=text_file)
             print(" ", file=text_file)
             print("results without norm, without top_k: ", file=text_file)
-            
+
             result = calculate_metrics(yTest_input, probs_predictions, opt.input_name)
             print("results without norm: ", result, file=text_file
-                 )
-            
-            
+                  )
+
             # auc1 = roc_auc_score(yTest_input, probs_predictions)
             # print("roc_auc_score (not normal) all ={}".format(auc1), file=text_file)
-            
+
             # # false_positive_rate, true_positive_rate, thresholds = roc_curve(yTest_input, probs_predictions)
             # print(f'TNR={false_positive_rate}, TPR={true_positive_rate}, threshold={thresholds}', file=text_file)
             # roc_score = auc(false_positive_rate, true_positive_rate)
-            
+
             # print(f"roc_auc_score (not normal) all={auc_out}, threshold={threshold}", file=text_file)
-            
-            
-            
-            
-            
+
             scores_per_scale_dict_norm = compute_normalized_dict(scores_per_scale_dict)
             scores_per_scale_dict_norm = scores_per_scale_dict_norm.cpu().clone().numpy()
             scores_per_scale_dict_norm = np.nan_to_num(scores_per_scale_dict_norm)
@@ -262,17 +302,19 @@ def anomaly_detection(input_name_model,test_size, opt):
             print("results with normalization, without top_k: ", file=text_file)
 
             probs_predictions_norm_all = np.mean(scores_per_scale_dict_norm, axis=0)
-            
+
             # false_positive_rate, true_positive_rate, thresholds = roc_curve(yTest_input, probs_predictions_norm_all)
             # # print(f'TNR={false_positive_rate}, TPR={true_positive_rate}, threshold={thresholds}', file=text_file)
             # roc_score = auc(false_positive_rate, true_positive_rate)
-            
+
             result = calculate_metrics(yTest_input, probs_predictions_norm_all, opt.input_name)
             print("results with normalization: ", result, file=text_file)
-            
+
             # print("roc_auc_score T1 normalize all ={}".format(roc_score), file=text_file)
 
     path = str(data) + "_test_scale" + str(scale) + "_" + str(pos_class) + "_" + str(num_images)
-    os.remove(path + "/" + str(data) + "_data_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy")
-    os.remove(path + "/" + str(data) + "_labels_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy")
+    os.remove(
+        path + "/" + str(data) + "_data_test_" + str(pos_class) + str(scale) + "_" + str(opt.index_download) + ".npy")
+    os.remove(
+        path + "/" + str(data) + "_labels_test_" + str(pos_class) + str(scale) + "_" + str(opt.index_download) + ".npy")
     del xTest_input, yTest_input

@@ -70,7 +70,7 @@ def download_class_mura(opt):
         
         # trainset = datasets.MNIST('./mnist_data', download=True, train=True)
         
-        train_data, train_labels = load_dataset_from_folder('Data/mura_march_clean/train_data', c_transforms=transforms.ToTensor())
+        train_data, train_labels = load_dataset_from_folder('Data/mura/train_data', c_transforms=transforms.ToTensor())
         
         train_data = train_data[np.where(train_labels == int(pos_class))]
 
@@ -106,7 +106,7 @@ def download_class_mura(opt):
 #     test_data = np.array(mura_testset.data)
 #     test_labels = np.array(mura_testset.targets)
     
-    test_data, test_labels = load_dataset_from_folder('Data/mura_march_clean/test_data', c_transforms=transforms.ToTensor())
+    test_data, test_labels = load_dataset_from_folder('Data/mura/test_data', c_transforms=transforms.ToTensor())
     
     np.save(path + "/mura_data_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy", test_data)
     np.save(path + "/mura_labels_test_" + str(pos_class) + str(scale) +  "_" + str(opt.index_download) + ".npy", test_labels)
